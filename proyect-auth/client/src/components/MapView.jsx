@@ -1,5 +1,4 @@
 import React from 'react'
-import { MapPin, Navigation } from 'lucide-react'
 import campusImage from '../assets/img/ubicate.png'
 
 const MapView = ({ userRole, events = [] }) => (
@@ -15,7 +14,7 @@ const MapView = ({ userRole, events = [] }) => (
           <p className="text-lg font-bold">Auditorio Principal</p>
         </div>
         <span className="flex items-center gap-2 text-blue-300 text-sm font-semibold">
-          <Navigation size={18} /> 3 min
+          <span className="text-[15px]">➜</span> 3 min
         </span>
       </div>
     </div>
@@ -38,8 +37,8 @@ const MapView = ({ userRole, events = [] }) => (
       </div>
 
       {userRole === 'Docente' && (
-        <button className="absolute bottom-6 right-6 z-20 bg-white/90 text-slate-900 px-4 py-2 rounded-full shadow-[0_15px_30px_rgba(15,23,42,0.4)] text-[10px] font-semibold uppercase tracking-[0.3em] border border-slate-200/70 flex items-center gap-2">
-          <MapPin size={16} /> Crear Marcador
+          <button className="absolute bottom-6 right-6 z-20 bg-white/90 text-slate-900 px-4 py-2 rounded-full shadow-[0_15px_30px_rgba(15,23,42,0.4)] text-[10px] font-semibold uppercase tracking-[0.3em] border border-slate-200/70 flex items-center gap-2">
+            <span className="text-[14px]">📍</span> Crear Marcador
         </button>
       )}
     </div>
