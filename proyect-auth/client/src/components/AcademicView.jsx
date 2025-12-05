@@ -203,23 +203,28 @@ Sugiere UNA actividad productiva breve. Responde SOLO con un JSON así:
   }
 
   return (
-    <div className="space-y-3">
-      {/* Grilla del horario */}
+    <div className="space-y-3 max-w-5xl w-full mx-auto px-2 sm:px-0">
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-        {/* Header con días */}
-        <div className="grid grid-cols-[40px_repeat(5,1fr)] bg-slate-50 border-b border-slate-200">
-          <div className="p-2 text-center">
-            <Clock size={14} className="mx-auto text-slate-400" />
-          </div>
-          {DIAS.map((dia, i) => (
-            <div key={dia} className="p-2 text-center border-l border-slate-200">
-              <span className="text-xs font-bold text-slate-600">{dia}</span>
+        <div className="overflow-x-auto">
+          <div className="min-w-[620px] lg:min-w-[720px]">
+            {/* Header con días */}
+            <div className="grid grid-cols-[40px_repeat(5,1fr)] bg-slate-50 border-b border-slate-200">
+              <div className="p-2 text-center">
+                <Clock size={14} className="mx-auto text-slate-400" />
+              </div>
+              {DIAS.map((dia, i) => (
+                <div key={dia} className="p-2 text-center border-l border-slate-200">
+                  <span className="text-xs font-bold text-slate-600">{dia}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
 
         {/* Cuerpo de la grilla */}
-        <div className="grid grid-cols-[40px_repeat(5,1fr)] relative" style={{ height: totalHeight }}>
+        <div className="overflow-x-auto">
+          <div className="min-w-[620px] lg:min-w-[720px]">
+            <div className="grid grid-cols-[40px_repeat(5,1fr)] relative" style={{ height: totalHeight }}>
           {/* Columna de horas */}
           <div className="relative border-r border-slate-100">
             {horas.map((h, i) => (
@@ -326,7 +331,8 @@ Sugiere UNA actividad productiva breve. Responde SOLO con un JSON así:
                                 // Convertir evento real a formato compatible
                                 const eventoParaMapa = {
                                   titulo: eventoReal.title,
-                                  ubicacion: eventoReal.location,
+                                  ubicacion: eventoReal.location || eventoReal.ubicacion?.nombre,
+                                  room: eventoReal.room || eventoReal.location || eventoReal.ubicacion?.nombre,
                                   hora: eventoReal.time,
                                   dia: diaFull
                                 }
@@ -396,7 +402,11 @@ Sugiere UNA actividad productiva breve. Responde SOLO con un JSON así:
                             <button
                               onClick={() => {
                                 setMenuEventoAbierto(null)
-                                onVerUbicacion && onVerUbicacion(eventoSugeridoGemini)
+                                onVerUbicacion && onVerUbicacion({
+                                  ...eventoSugeridoGemini,
+                                  room: eventoSugeridoGemini.ubicacion || eventoSugeridoGemini.location,
+                                  destino: eventoSugeridoGemini.ubicacion || eventoSugeridoGemini.location
+                                })
                               }}
                               className="w-full px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-indigo-50 flex items-center gap-2"
                             >
@@ -530,12 +540,14 @@ Sugiere UNA actividad productiva breve. Responde SOLO con un JSON así:
               })}
             </div>
           )})}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Panel de detalle de clase seleccionada */}
       {selectedClass && (
-        <Card className={`border-l-4 ${colorMap[selectedClass.subject]?.border || 'border-slate-300'} animate-fade-in`}>
+        <Card className={`border-l-4 ${colorMap[selectedClass.subject]?.border || 'border-slate-300'} animate-fade-in w-full`}>
           <div className="flex justify-between items-start">
             <div>
               <h4 className="font-bold text-slate-800">{selectedClass.subject}</h4>
@@ -634,8 +646,8 @@ const AcademicView = ({ grades = [], attendance = [], schedule = [], eventos = [
   }
 
   return (
-    <div className="p-4 space-y-4 pb-24 h-full flex flex-col">
-      <div className="flex p-1 bg-slate-100 rounded-xl mb-2">
+    <div className="p-4 space-y-4 pb-24 h-full flex flex-col max-w-5xl w-full mx-auto">
+      <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl mb-2">
         {['Horario', 'Notas', 'Asistencia'].map((tab) => {
           const key = tab === 'Horario' ? 'schedule' : tab === 'Notas' ? 'grades' : 'attendance'
           return (

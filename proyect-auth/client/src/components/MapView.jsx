@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { MapPin, Navigation, Clock, X, Eye, Sparkles } from 'lucide-react'
 import campusImage from '../assets/img/ubicate.png'
 
+const FAKE_ROUTE_ORIGIN = { label: 'Patio de Ingeniería', coords: { x: 18, y: 20 } }
+const toViewBoxCoords = ({ x, y }) => ({ x, y: 100 - y })
+
 // Función para convertir coordenadas del backend (0,0 = esquina inferior izquierda)
 // a coordenadas CSS (0,0 = esquina superior izquierda)
 const convertirCoordenadas = (x, y) => {
@@ -47,7 +50,7 @@ const prepararEventosParaMapa = (events) => {
     })
 }
 
-const MapView = ({ userRole, events = [], eventoResaltado = null, onEventoResaltadoVisto }) => {
+const MapView = ({ userRole, events = [], eventoResaltado = null, onEventoResaltadoVisto, rutaFicticia = null }) => {
   // Estado para el evento seleccionado
   const [selectedEventId, setSelectedEventId] = useState(null)
   
@@ -83,6 +86,12 @@ const MapView = ({ userRole, events = [], eventoResaltado = null, onEventoResalt
   const eventoSeleccionado = selectedEventId 
     ? eventosEnMapa.find(evt => evt.id === selectedEventId)
     : null
+
+  const routeDestination = rutaFicticia?.destination
+  const routeCoords = routeDestination?.coords
+  const originPosition = convertirCoordenadas(FAKE_ROUTE_ORIGIN.coords.x, FAKE_ROUTE_ORIGIN.coords.y)
+  const routeOriginView = toViewBoxCoords(FAKE_ROUTE_ORIGIN.coords)
+  const routeDestinationView = routeCoords ? toViewBoxCoords(routeCoords) : null
   
   return (
     <div className="flex flex-col gap-4">
@@ -176,6 +185,28 @@ const MapView = ({ userRole, events = [], eventoResaltado = null, onEventoResalt
 
       <div className="relative w-full h-[510px] rounded-[36px] overflow-hidden border border-slate-900/20 shadow-[0_30px_60px_rgba(15,23,42,0.25)]">
         <img src={campusImage} alt="Mapa del campus" className="absolute inset-0 w-full h-full object-cover" />
+        {routeDestinationView && (
+          <svg viewBox="0 0 100 100" className="absolute inset-0 pointer-events-none">
+            <defs>
+              <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#34d399" />
+                <stop offset="100%" stopColor="#0ea5e9" />
+              </linearGradient>
+            </defs>
+            <path
+              d={`M ${routeOriginView.x} ${routeOriginView.y} Q ${(routeOriginView.x + routeDestinationView.x) / 2} ${Math.max(8, Math.min(routeOriginView.y, routeDestinationView.y) - 12)} ${routeDestinationView.x} ${routeDestinationView.y}`}
+              stroke="url(#routeGradient)"
+              strokeWidth="1.6"
+              fill="none"
+              strokeDasharray="4 2"
+            />
+          </svg>
+        )}
+        {routeDestinationView && (
+          <div className="absolute rounded-full border-2 border-white shadow-lg bg-emerald-500/80 w-9 h-9 flex items-center justify-center text-white text-sm" style={{ left: originPosition.left, top: originPosition.top }}>
+            <span className="text-[10px] font-bold">Tú</span>
+          </div>
+        )}
         
         {/* Info del evento seleccionado */}
         {eventoSeleccionado && (
@@ -261,6 +292,15 @@ const MapView = ({ userRole, events = [], eventoResaltado = null, onEventoResalt
           <button className="absolute bottom-6 right-6 z-20 bg-white/90 text-slate-900 px-4 py-2 rounded-full shadow-[0_15px_30px_rgba(15,23,42,0.4)] text-[10px] font-semibold uppercase tracking-[0.3em] border border-slate-200/70 flex items-center gap-2 hover:bg-white transition-colors">
             <MapPin size={16} /> Crear Marcador
           </button>
+        )}
+        {routeDestination && (
+          <div className="absolute bottom-4 left-4 right-4 z-20 bg-white/90 backdrop-blur-sm rounded-3xl border border-slate-200 p-3 shadow-xl">
+            <div className="flex items-center justify-between text-xs uppercase tracking-[0.4em] text-slate-500">
+              <span>Ruta ficticia</span>
+              <span className="text-emerald-600 font-bold">{routeDestination.time || '—'} · {routeDestination.label}</span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2">Camino marcado entre puntos {FAKE_ROUTE_ORIGIN.label} → {routeDestination.label}</p>
+          </div>
         )}
       </div>
     </div>

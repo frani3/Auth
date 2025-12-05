@@ -11,7 +11,15 @@ import { getHorario, getNotas, getEventos } from './services/backendApi'
 
 const ROLES = {
   STUDENT: { name: 'Sofía', role: 'Estudiante', id: 'u2023001' },
-  PROFESSOR: { name: 'Prof. Lagos', role: 'Docente', id: 'd199005' }
+  PROFESSOR: { name: 'Prof. Lagos', role: 'Docente', id: 'd199005' },
+  EXTERNAL: { name: 'Visitante', role: 'Externo', id: 'x300111' }
+}
+
+const ROLE_SEQUENCE = [ROLES.STUDENT, ROLES.PROFESSOR, ROLES.EXTERNAL]
+const ROLE_ACCESS = {
+  Estudiante: ['home', 'academic', 'map', 'assistant', 'eventtest', 'profile'],
+  Docente: ['home', 'academic', 'map', 'assistant', 'eventtest', 'profile'],
+  Externo: ['map', 'assistant']
 }
 
 const getTabTitle = (tab) => {
@@ -42,6 +50,25 @@ const DESKTOP_NAV = [
   { id: 'profile', label: 'Perfil', icon: User }
 ]
 
+const ROOM_COORDINATES = {
+  'a-201': { x: 32, y: 45 },
+  'c-302': { x: 48, y: 40 },
+  'sala 302': { x: 48, y: 38 },
+  'lab-4': { x: 55, y: 55 },
+  'auditorio': { x: 60, y: 30 },
+  'auditorio principal': { x: 60, y: 28 },
+  'plaza central': { x: 50, y: 60 }
+}
+
+const resolveRoomCoordinates = (label = '') => {
+  if (!label) return { x: 52, y: 45 }
+  const normalized = label.toLowerCase()
+  const match = Object.entries(ROOM_COORDINATES).find(([key]) => normalized.includes(key))
+  return match ? match[1] : { x: 52, y: 45 }
+}
+
+const FAKE_ROUTE_ORIGIN = { label: 'Patio de Ingeniería', coords: { x: 18, y: 20 } }
+
 const Header = ({ title, userRole, onSwitch }) => (
   <div className="flex justify-between items-center p-4 bg-white shadow-sm sticky top-0 z-10">
     <div>
@@ -65,142 +92,156 @@ const Header = ({ title, userRole, onSwitch }) => (
   </div>
 )
 
-const DesktopView = ({ activeTab, setActiveTab, user, onToggleRole, schedule, grades, attendance, events, onEventoCreado, navegarAlAsistente, ventanaActiva, setVentanaActiva, eventosSugeridos, verUbicacionEvento, pedirInfoEvento, eventoResaltadoMapa, setEventoResaltadoMapa, eventoParaInfo, setEventoParaInfo, setEventosSugeridos, agregarEventoSugerido, agregarActividadSugerida }) => (
-  <div className="hidden md:grid md:grid-cols-[220px_1fr_300px] md:gap-6 md:w-full md:mt-6">
-    <div className="bg-white shadow-2xl rounded-3xl p-5 flex flex-col gap-6 sticky top-6 h-[calc(100vh-48px)]">
-      <div>
-        <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Campus</p>
-        <h3 className="text-2xl font-bold text-slate-900 mt-1">Integrate</h3>
-      </div>
-      <div className="flex-1 space-y-3">
-        {DESKTOP_NAV.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-2xl transition ${
-              activeTab === item.id ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            <item.icon size={18} />
-            <span className="text-sm font-bold">{item.label}</span>
-          </button>
-        ))}
-      </div>
-      <div className="space-y-3">
-        <p className="text-xs uppercase text-slate-400 tracking-[0.4em]">Rol actual</p>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-100 rounded-2xl flex items-center justify-center">
-            <User size={20} className="text-slate-500" />
-          </div>
-          <div>
-            <p className="font-bold text-slate-900">{user.name}</p>
-            <p className="text-xs uppercase text-slate-400">{user.role}</p>
-          </div>
-        </div>
-        <button
-          onClick={() => setActiveTab('assistant')}
-          className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white text-xs font-bold uppercase px-3 py-2 rounded-2xl shadow-lg"
-        >
-          <Sparkles size={16} />
-          Ir al Asistente
-        </button>
-      </div>
-    </div>
-    <div className="bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col min-h-[80vh]">
-      <Header title={getTabTitle(activeTab)} userRole={user} onSwitch={onToggleRole} />
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {activeTab === 'home' && <HomePage schedule={schedule} user={user} onNavigate={setActiveTab} />}
-        {activeTab === 'academic' && (
-          <AcademicPage 
-            grades={grades} 
-            attendance={attendance} 
-            schedule={schedule} 
-            eventos={events}
-            eventosSugeridos={eventosSugeridos}
-            onNavigateToAssistant={navegarAlAsistente}
-            onVerUbicacion={verUbicacionEvento}
-            onPedirInfo={pedirInfoEvento}
-            onSugerirEvento={agregarEventoSugerido}
-            onSugerirActividad={agregarActividadSugerida}
-          />
-        )}
-        {activeTab === 'map' && (
-          <MapPage 
-            userRole={user.role} 
-            events={events}
-            eventoResaltado={eventoResaltadoMapa}
-            onEventoResaltadoVisto={() => setEventoResaltadoMapa(null)}
-          />
-        )}
-        {activeTab === 'assistant' && (
-          <ChatPage 
-            user={user} 
-            onToggleRole={onToggleRole} 
-            schedule={schedule} 
-            eventos={events} 
-            onEventoCreado={onEventoCreado} 
-            ventanaActiva={ventanaActiva} 
-            onVentanaUsada={() => setVentanaActiva(null)}
-            eventoParaInfo={eventoParaInfo}
-            onEventoInfoUsado={() => setEventoParaInfo(null)}
-            onEventosSugeridos={setEventosSugeridos}
-          />
-        )}
-        {activeTab === 'eventtest' && <EventTestPage user={user} onEventoCreado={onEventoCreado} />}
-        {activeTab === 'profile' && <ProfilePage user={user} onToggleRole={onToggleRole} />}
-      </div>
-    </div>
-    <div className="bg-white shadow-xl rounded-3xl p-5 space-y-5 sticky top-6 h-[calc(100vh-48px)]">
-      <div className="flex items-center justify-between">
+const DesktopView = ({ activeTab, setActiveTab, user, onToggleRole, schedule, grades, attendance, events, onEventoCreado, navegarAlAsistente, ventanaActiva, setVentanaActiva, eventosSugeridos, verUbicacionEvento, pedirInfoEvento, eventoResaltadoMapa, setEventoResaltadoMapa, eventoParaInfo, setEventoParaInfo, setEventosSugeridos, agregarEventoSugerido, agregarActividadSugerida, rutaFicticia, allowedTabs }) => {
+  const navItems = DESKTOP_NAV.filter((item) => allowedTabs.includes(item.id))
+
+  return (
+    <div className="hidden md:grid md:grid-cols-[220px_1fr_300px] md:gap-6 md:w-full md:mt-6">
+      <div className="bg-white shadow-2xl rounded-3xl p-5 flex flex-col gap-6 sticky top-6 h-[calc(100vh-48px)]">
         <div>
-          <p className="text-xs uppercase text-slate-400">Campus en vivo</p>
-          <h4 className="font-bold text-slate-900">Agenda activa</h4>
+          <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Campus San JoaquÍn</p>
+          <h3 className="text-2xl font-bold text-slate-900 mt-1">Integrate</h3>
         </div>
-        <Calendar size={20} className="text-slate-500" />
-      </div>
-      <div className="space-y-3">
-        <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span>Actividad</span>
-            <button className="text-[11px] font-bold text-emerald-600">Ver ruta</button>
+        <div className="flex-1 space-y-3">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-2xl transition ${
+                activeTab === item.id ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <item.icon size={18} />
+              <span className="text-sm font-bold">{item.label}</span>
+            </button>
+          ))}
+        </div>
+        <div className="space-y-3">
+          <p className="text-xs uppercase text-slate-400 tracking-[0.4em]">Rol actual</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-slate-100 rounded-2xl flex items-center justify-center">
+              <User size={20} className="text-slate-500" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-900">{user.name}</p>
+              <p className="text-xs uppercase text-slate-400">{user.role}</p>
+            </div>
           </div>
-          <p className="font-semibold text-slate-900 mt-2">Ayudantía Cálculo</p>
-          <p className="text-[11px] text-slate-500">Sala 302</p>
-        </div>
-        <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span>Evento</span>
-            <button className="text-[11px] font-bold text-emerald-600">Ver ruta</button>
-          </div>
-          <p className="font-semibold text-slate-900 mt-2">Charla Tech</p>
-          <p className="text-[11px] text-slate-500">Auditorio</p>
+          {allowedTabs.includes('assistant') && (
+            <button
+              onClick={() => setActiveTab('assistant')}
+              className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white text-xs font-bold uppercase px-3 py-2 rounded-2xl shadow-lg"
+            >
+              <Sparkles size={16} />
+              Ir al Asistente
+            </button>
+          )}
         </div>
       </div>
-      <div className="bg-slate-900 text-white p-4 rounded-2xl space-y-2">
-        <p className="text-xs uppercase tracking-[0.4em] text-emerald-300">Panorama</p>
-        <div className="flex items-center justify-between text-sm font-bold">
-          <span>Asistencia</span>
-          <span>72%</span>
+      <div className="bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col min-h-[80vh]">
+        <Header title={getTabTitle(activeTab)} userRole={user} onSwitch={onToggleRole} />
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {allowedTabs.includes('home') && activeTab === 'home' && (
+            <HomePage schedule={schedule} user={user} onNavigate={setActiveTab} />
+          )}
+          {allowedTabs.includes('academic') && activeTab === 'academic' && (
+            <AcademicPage
+              grades={grades}
+              attendance={attendance}
+              schedule={schedule}
+              eventos={events}
+              eventosSugeridos={eventosSugeridos}
+              onNavigateToAssistant={navegarAlAsistente}
+              onVerUbicacion={verUbicacionEvento}
+              onPedirInfo={pedirInfoEvento}
+              onSugerirEvento={agregarEventoSugerido}
+              onSugerirActividad={agregarActividadSugerida}
+            />
+          )}
+          {allowedTabs.includes('map') && activeTab === 'map' && (
+            <MapPage
+              userRole={user.role}
+              events={events}
+              eventoResaltado={eventoResaltadoMapa}
+              onEventoResaltadoVisto={() => setEventoResaltadoMapa(null)}
+              rutaFicticia={rutaFicticia}
+            />
+          )}
+          {allowedTabs.includes('assistant') && activeTab === 'assistant' && (
+            <ChatPage
+              user={user}
+              onToggleRole={onToggleRole}
+              schedule={schedule}
+              eventos={events}
+              onEventoCreado={onEventoCreado}
+              ventanaActiva={ventanaActiva}
+              onVentanaUsada={() => setVentanaActiva(null)}
+              eventoParaInfo={eventoParaInfo}
+              onEventoInfoUsado={() => setEventoParaInfo(null)}
+              onEventosSugeridos={setEventosSugeridos}
+            />
+          )}
+          {allowedTabs.includes('eventtest') && activeTab === 'eventtest' && (
+            <EventTestPage user={user} onEventoCreado={onEventoCreado} />
+          )}
+          {allowedTabs.includes('profile') && activeTab === 'profile' && (
+            <ProfilePage user={user} onToggleRole={onToggleRole} />
+          )}
         </div>
-        <div className="w-full h-1 bg-white/20 rounded-full">
-          <div className="h-1 bg-emerald-400 rounded-full" style={{ width: '72%' }}></div>
+      </div>
+      <div className="bg-white shadow-xl rounded-3xl p-5 space-y-5 sticky top-6 h-[calc(100vh-48px)]">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase text-slate-400">Campus en vivo</p>
+            <h4 className="font-bold text-slate-900">Agenda activa</h4>
+          </div>
+          <Calendar size={20} className="text-slate-500" />
         </div>
-        <div className="flex items-center justify-between text-sm font-bold">
-          <span>Promedio</span>
-          <span>5.4</span>
+        <div className="space-y-3">
+          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Actividad</span>
+              <button className="text-[11px] font-bold text-emerald-600">Ver ruta</button>
+            </div>
+            <p className="font-semibold text-slate-900 mt-2">Ayudantía Cálculo</p>
+            <p className="text-[11px] text-slate-500">Sala 302</p>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Evento</span>
+              <button className="text-[11px] font-bold text-emerald-600">Ver ruta</button>
+            </div>
+            <p className="font-semibold text-slate-900 mt-2">Charla Tech</p>
+            <p className="text-[11px] text-slate-500">Auditorio</p>
+          </div>
         </div>
-        <div className="w-full h-1 bg-white/20 rounded-full">
-          <div className="h-1 bg-blue-400 rounded-full" style={{ width: '65%' }}></div>
+        <div className="bg-slate-900 text-white p-4 rounded-2xl space-y-2">
+          <p className="text-xs uppercase tracking-[0.4em] text-emerald-300">Panorama</p>
+          <div className="flex items-center justify-between text-sm font-bold">
+            <span>Asistencia</span>
+            <span>72%</span>
+          </div>
+          <div className="w-full h-1 bg-white/20 rounded-full">
+            <div className="h-1 bg-emerald-400 rounded-full" style={{ width: '72%' }}></div>
+          </div>
+          <div className="flex items-center justify-between text-sm font-bold">
+            <span>Promedio</span>
+            <span>5.4</span>
+          </div>
+          <div className="w-full h-1 bg-white/20 rounded-full">
+            <div className="h-1 bg-blue-400 rounded-full" style={{ width: '65%' }}></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 export default function UniversityApp() {
   const [activeTab, setActiveTab] = useState('home')
   const [currentUser, setCurrentUser] = useState(ROLES.STUDENT)
   const [ventanaActiva, setVentanaActiva] = useState(null) // Ventana seleccionada desde el horario
+  const [rutaFicticia, setRutaFicticia] = useState(null)
   
   // Estados para datos de la API
   const [horarioAPI, setHorarioAPI] = useState([])
@@ -223,6 +264,14 @@ export default function UniversityApp() {
   const verUbicacionEvento = (evento) => {
     setEventoResaltadoMapa(evento)
     setActiveTab('map')
+    const destination = resolveRoomCoordinates(evento.room || evento.ubicacion || evento.location || evento.destino)
+    setRutaFicticia({
+      destination: {
+        coords: destination,
+        label: evento.ubicacion || evento.location || evento.titulo || evento.title || 'Destino',
+        time: evento.hora || evento.time || ''
+      }
+    })
   }
   
   // Función para pedir más info de un evento (abre Gemini Live)
@@ -296,6 +345,8 @@ export default function UniversityApp() {
     }
   }
 
+  const allowedTabs = ROLE_ACCESS[currentUser.role] ?? DESKTOP_NAV.map((item) => item.id)
+
   return (
     <div className="min-h-screen bg-slate-200 flex justify-center font-sans text-slate-800">
       <div className="w-full bg-transparent min-h-screen relative overflow-hidden flex flex-col md:px-4 md:py-6">
@@ -325,6 +376,7 @@ export default function UniversityApp() {
                 events={eventosAPI.length > 0 ? eventosAPI : CAMPUS_EVENTS}
                 eventoResaltado={eventoResaltadoMapa}
                 onEventoResaltadoVisto={() => setEventoResaltadoMapa(null)}
+                rutaFicticia={rutaFicticia}
               />
             )}
             {activeTab === 'assistant' && (
@@ -368,32 +420,48 @@ export default function UniversityApp() {
           setEventosSugeridos={setEventosSugeridos}
           agregarEventoSugerido={agregarEventoSugerido}
           agregarActividadSugerida={agregarActividadSugerida}
+          rutaFicticia={rutaFicticia}
+          allowedTabs={allowedTabs}
         />
-        <div className="bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center relative z-10 safe-area-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:hidden">
-          <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 ${activeTab === 'home' ? 'text-emerald-600' : 'text-slate-400'}`}>
-            <Home size={24} />
-            <span className="text-[10px] font-bold">Inicio</span>
-          </button>
-          <button onClick={() => setActiveTab('academic')} className={`flex flex-col items-center gap-1 ${activeTab === 'academic' ? 'text-emerald-600' : 'text-slate-400'}`}>
-            <Book size={24} />
-            <span className="text-[10px] font-bold">Académico</span>
-          </button>
-          <div className="relative -top-6">
-            <button
-              onClick={() => setActiveTab('assistant')}
-              className="bg-slate-900 text-white p-4 rounded-2xl shadow-xl shadow-slate-400/50 transform transition-transform hover:scale-110 active:scale-95 flex items-center justify-center rotate-45"
-            >
-              <Sparkles size={24} className="-rotate-45" />
-            </button>
+        <div className="bg-white border-t border-slate-200 px-6 py-3 safe-area-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:hidden">
+          <div className="flex items-center justify-between relative z-10">
+            {allowedTabs.includes('home') && (
+              <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 ${activeTab === 'home' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                <Home size={24} />
+                <span className="text-[10px] font-bold">Inicio</span>
+              </button>
+            )}
+            {allowedTabs.includes('academic') && (
+              <button onClick={() => setActiveTab('academic')} className={`flex flex-col items-center gap-1 ${activeTab === 'academic' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                <Book size={24} />
+                <span className="text-[10px] font-bold">Académico</span>
+              </button>
+            )}
+            {allowedTabs.includes('assistant') ? (
+              <div className="relative -top-6">
+                <button
+                  onClick={() => setActiveTab('assistant')}
+                  className="bg-slate-900 text-white p-4 rounded-2xl shadow-xl shadow-slate-400/50 transform transition-transform hover:scale-110 active:scale-95 flex items-center justify-center rotate-45"
+                >
+                  <Sparkles size={24} className="-rotate-45" />
+                </button>
+              </div>
+            ) : (
+              <div className="w-12" />
+            )}
+            {allowedTabs.includes('map') && (
+              <button onClick={() => setActiveTab('map')} className={`flex flex-col items-center gap-1 ${activeTab === 'map' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                <MapIcon size={24} />
+                <span className="text-[10px] font-bold">Campus</span>
+              </button>
+            )}
+            {allowedTabs.includes('profile') && (
+              <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center gap-1 ${activeTab === 'profile' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                <User size={24} />
+                <span className="text-[10px] font-bold">Perfil</span>
+              </button>
+            )}
           </div>
-          <button onClick={() => setActiveTab('map')} className={`flex flex-col items-center gap-1 ${activeTab === 'map' ? 'text-emerald-600' : 'text-slate-400'}`}>
-            <MapIcon size={24} />
-            <span className="text-[10px] font-bold">Campus</span>
-          </button>
-          <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center gap-1 ${activeTab === 'profile' ? 'text-emerald-600' : 'text-slate-400'}`}>
-            <User size={24} />
-            <span className="text-[10px] font-bold">Perfil</span>
-          </button>
         </div>
       </div>
       <style>{`

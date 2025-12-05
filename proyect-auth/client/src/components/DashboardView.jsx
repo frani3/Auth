@@ -3,10 +3,10 @@ import { Clock, MapPin, Book } from 'lucide-react'
 import Card from './Card'
 
 const DashboardView = ({ schedule = [], onNavigate, user }) => (
-  <div className="space-y-6 pb-24">
-    <div className="bg-slate-800 p-6 rounded-b-3xl text-white shadow-lg -mt-4 pt-8">
-      <div className="flex justify-between items-start mb-6">
-        <div>
+  <div className="max-w-4xl mx-auto space-y-6 pb-24 px-4 sm:px-6 lg:px-0">
+    <div className="bg-slate-800 p-5 sm:p-6 rounded-b-3xl text-white shadow-lg -mt-4 pt-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
+        <div className="flex-1">
           <h2 className="text-2xl font-bold">Bienvenido, {user.name}</h2>
           <p className="text-slate-300 text-sm">Eficiencia de hoy: 85%</p>
         </div>
@@ -29,13 +29,13 @@ const DashboardView = ({ schedule = [], onNavigate, user }) => (
       </div>
     </div>
     <div className="px-4 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="font-bold text-slate-700 text-lg">Resumen Logístico</h3>
-        <button className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded border hover:bg-slate-200">+ Nuevo Evento</button>
+        <button className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded border hover:bg-slate-200 w-full sm:w-auto text-center">+ Nuevo Evento</button>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 no-scrollbar">
         {schedule.map((item, idx) => (
-          <div key={idx} className={`min-w-[150px] p-3 rounded-xl border relative overflow-hidden ${item.status === 'break' ? 'bg-stripes-gray border-slate-200' : 'bg-white border-slate-100'}`}>
+          <div key={idx} className={`min-w-[160px] sm:min-w-[150px] p-3 rounded-xl border relative overflow-hidden ${item.status === 'break' ? 'bg-stripes-gray border-slate-200' : 'bg-white border-slate-100'}`}>
             <div className="flex justify-between items-start mb-2">
               <span className="text-xs font-mono text-slate-500">{item.time} - {item.endTime}</span>
               {item.status === 'break' && <Clock size={14} className="text-slate-400" />}
@@ -51,7 +51,7 @@ const DashboardView = ({ schedule = [], onNavigate, user }) => (
         ))}
       </div>
       <h3 className="font-bold text-slate-700 text-lg mt-4">Accesos Directos</h3>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Card className="flex flex-col items-center justify-center gap-2 hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200 transition-all">
           <div className="bg-blue-100 p-2 rounded-full text-blue-600">
             <Book size={20} />
