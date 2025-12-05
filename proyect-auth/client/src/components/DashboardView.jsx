@@ -37,7 +37,7 @@ const DashboardView = ({ schedule = [], onNavigate, user }) => (
         {schedule.map((item, idx) => (
           <div key={idx} className={`min-w-[150px] p-3 rounded-xl border relative overflow-hidden ${item.status === 'break' ? 'bg-stripes-gray border-slate-200' : 'bg-white border-slate-100'}`}>
             <div className="flex justify-between items-start mb-2">
-              <span className="text-xs font-mono text-slate-500">{item.time}</span>
+              <span className="text-xs font-mono text-slate-500">{item.time} - {item.endTime}</span>
               {item.status === 'break' && <Clock size={14} className="text-slate-400" />}
             </div>
             <p className="font-bold text-slate-800 text-sm leading-tight">{item.subject}</p>

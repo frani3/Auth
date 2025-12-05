@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Home, Book, Map as MapIcon, User, Bell, Calendar, Sparkles } from 'lucide-react'
+import { Home, Book, Map as MapIcon, User, Bell, Calendar, Sparkles, CalendarPlus } from 'lucide-react'
 import HomePage from './pages/Home'
 import AcademicPage from './pages/Academic'
 import MapPage from './pages/Map'
 import ChatPage from './pages/Chat'
 import ProfilePage from './pages/Profile'
+import EventTestPage from './pages/EventTest'
 import { SCHEDULE_TODAY, GRADES, ATTENDANCE, CAMPUS_EVENTS } from './data/mockData'
 import { getHorario, getNotas, getEventos } from './services/backendApi'
 
@@ -23,6 +24,8 @@ const getTabTitle = (tab) => {
       return 'Campus Vivo'
     case 'assistant':
       return 'Asistente Operativo'
+    case 'eventtest':
+      return 'Agregar Evento'
     case 'profile':
       return 'Perfil'
     default:
@@ -35,6 +38,7 @@ const DESKTOP_NAV = [
   { id: 'academic', label: 'Académico', icon: Book },
   { id: 'map', label: 'Campus', icon: MapIcon },
   { id: 'assistant', label: 'Operativo', icon: Sparkles },
+  { id: 'eventtest', label: 'Agregar Evento', icon: CalendarPlus },
   { id: 'profile', label: 'Perfil', icon: User }
 ]
 
@@ -61,7 +65,7 @@ const Header = ({ title, userRole, onSwitch }) => (
   </div>
 )
 
-const DesktopView = ({ activeTab, setActiveTab, user, onToggleRole, schedule, grades, attendance, events, onEventoCreado }) => (
+const DesktopView = ({ activeTab, setActiveTab, user, onToggleRole, schedule, grades, attendance, events, onEventoCreado, navegarAlAsistente, ventanaActiva, setVentanaActiva, eventosSugeridos, verUbicacionEvento, pedirInfoEvento, eventoResaltadoMapa, setEventoResaltadoMapa, eventoParaInfo, setEventoParaInfo, setEventosSugeridos, agregarEventoSugerido, agregarActividadSugerida }) => (
   <div className="hidden md:grid md:grid-cols-[220px_1fr_300px] md:gap-6 md:w-full md:mt-6">
     <div className="bg-white shadow-2xl rounded-3xl p-5 flex flex-col gap-6 sticky top-6 h-[calc(100vh-48px)]">
       <div>
@@ -107,12 +111,42 @@ const DesktopView = ({ activeTab, setActiveTab, user, onToggleRole, schedule, gr
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {activeTab === 'home' && <HomePage schedule={schedule} user={user} onNavigate={setActiveTab} />}
         {activeTab === 'academic' && (
-          <AcademicPage grades={grades} attendance={attendance} schedule={schedule} />
+          <AcademicPage 
+            grades={grades} 
+            attendance={attendance} 
+            schedule={schedule} 
+            eventos={events}
+            eventosSugeridos={eventosSugeridos}
+            onNavigateToAssistant={navegarAlAsistente}
+            onVerUbicacion={verUbicacionEvento}
+            onPedirInfo={pedirInfoEvento}
+            onSugerirEvento={agregarEventoSugerido}
+            onSugerirActividad={agregarActividadSugerida}
+          />
         )}
-        {activeTab === 'map' && <MapPage userRole={user.role} events={events} />}
+        {activeTab === 'map' && (
+          <MapPage 
+            userRole={user.role} 
+            events={events}
+            eventoResaltado={eventoResaltadoMapa}
+            onEventoResaltadoVisto={() => setEventoResaltadoMapa(null)}
+          />
+        )}
         {activeTab === 'assistant' && (
-          <ChatPage user={user} onToggleRole={onToggleRole} schedule={schedule} eventos={events} onEventoCreado={onEventoCreado} />
+          <ChatPage 
+            user={user} 
+            onToggleRole={onToggleRole} 
+            schedule={schedule} 
+            eventos={events} 
+            onEventoCreado={onEventoCreado} 
+            ventanaActiva={ventanaActiva} 
+            onVentanaUsada={() => setVentanaActiva(null)}
+            eventoParaInfo={eventoParaInfo}
+            onEventoInfoUsado={() => setEventoParaInfo(null)}
+            onEventosSugeridos={setEventosSugeridos}
+          />
         )}
+        {activeTab === 'eventtest' && <EventTestPage user={user} onEventoCreado={onEventoCreado} />}
         {activeTab === 'profile' && <ProfilePage user={user} onToggleRole={onToggleRole} />}
       </div>
     </div>
@@ -166,12 +200,64 @@ const DesktopView = ({ activeTab, setActiveTab, user, onToggleRole, schedule, gr
 export default function UniversityApp() {
   const [activeTab, setActiveTab] = useState('home')
   const [currentUser, setCurrentUser] = useState(ROLES.STUDENT)
+  const [ventanaActiva, setVentanaActiva] = useState(null) // Ventana seleccionada desde el horario
   
   // Estados para datos de la API
   const [horarioAPI, setHorarioAPI] = useState([])
   const [notasAPI, setNotasAPI] = useState([])
   const [eventosAPI, setEventosAPI] = useState([])
   const [loadingData, setLoadingData] = useState(true)
+  
+  // Estados para eventos sugeridos por Gemini
+  const [eventosSugeridos, setEventosSugeridos] = useState([])
+  const [eventoResaltadoMapa, setEventoResaltadoMapa] = useState(null) // Para resaltar en mapa
+  const [eventoParaInfo, setEventoParaInfo] = useState(null) // Para pedir más info con Gemini
+
+  // Función para navegar al asistente con contexto de ventana
+  const navegarAlAsistente = (ventana = null) => {
+    setVentanaActiva(ventana)
+    setActiveTab('assistant')
+  }
+  
+  // Función para ver ubicación de un evento sugerido en el mapa
+  const verUbicacionEvento = (evento) => {
+    setEventoResaltadoMapa(evento)
+    setActiveTab('map')
+  }
+  
+  // Función para pedir más info de un evento (abre Gemini Live)
+  const pedirInfoEvento = (evento) => {
+    setEventoParaInfo(evento)
+    setActiveTab('assistant')
+  }
+  
+  // Función para agregar un evento sugerido al horario
+  const agregarEventoSugerido = (evento) => {
+    setEventosSugeridos(prev => {
+      // Evitar duplicados por día y hora
+      const existe = prev.some(e => e.dia === evento.dia && e.hora === evento.hora)
+      if (existe) {
+        return prev.map(e => 
+          (e.dia === evento.dia && e.hora === evento.hora) ? evento : e
+        )
+      }
+      return [...prev, evento]
+    })
+  }
+  
+  // Función para agregar una actividad sugerida (igual que evento pero con marca diferente)
+  const agregarActividadSugerida = (actividad) => {
+    setEventosSugeridos(prev => {
+      // Evitar duplicados por día y hora
+      const existe = prev.some(e => e.dia === actividad.dia && e.hora === actividad.hora)
+      if (existe) {
+        return prev.map(e => 
+          (e.dia === actividad.dia && e.hora === actividad.hora) ? actividad : e
+        )
+      }
+      return [...prev, actividad]
+    })
+  }
 
   // Cargar datos del backend al montar
   useEffect(() => {
@@ -220,9 +306,27 @@ export default function UniversityApp() {
               <HomePage schedule={horarioAPI.length > 0 ? horarioAPI : SCHEDULE_TODAY} user={currentUser} onNavigate={setActiveTab} />
             )}
             {activeTab === 'academic' && (
-              <AcademicPage grades={notasAPI.length > 0 ? notasAPI : GRADES} attendance={ATTENDANCE} schedule={horarioAPI.length > 0 ? horarioAPI : SCHEDULE_TODAY} />
+              <AcademicPage 
+                grades={notasAPI.length > 0 ? notasAPI : GRADES} 
+                attendance={ATTENDANCE} 
+                schedule={horarioAPI.length > 0 ? horarioAPI : SCHEDULE_TODAY}
+                eventos={eventosAPI.length > 0 ? eventosAPI : CAMPUS_EVENTS}
+                eventosSugeridos={eventosSugeridos}
+                onNavigateToAssistant={navegarAlAsistente}
+                onVerUbicacion={verUbicacionEvento}
+                onPedirInfo={pedirInfoEvento}
+                onSugerirEvento={agregarEventoSugerido}
+                onSugerirActividad={agregarActividadSugerida}
+              />
             )}
-            {activeTab === 'map' && <MapPage userRole={currentUser.role} events={eventosAPI.length > 0 ? eventosAPI : CAMPUS_EVENTS} />}
+            {activeTab === 'map' && (
+              <MapPage 
+                userRole={currentUser.role} 
+                events={eventosAPI.length > 0 ? eventosAPI : CAMPUS_EVENTS}
+                eventoResaltado={eventoResaltadoMapa}
+                onEventoResaltadoVisto={() => setEventoResaltadoMapa(null)}
+              />
+            )}
             {activeTab === 'assistant' && (
               <ChatPage 
                 user={currentUser} 
@@ -230,8 +334,14 @@ export default function UniversityApp() {
                 schedule={horarioAPI.length > 0 ? horarioAPI : SCHEDULE_TODAY}
                 eventos={eventosAPI.length > 0 ? eventosAPI : CAMPUS_EVENTS}
                 onEventoCreado={recargarEventos}
+                ventanaActiva={ventanaActiva}
+                onVentanaUsada={() => setVentanaActiva(null)}
+                eventoParaInfo={eventoParaInfo}
+                onEventoInfoUsado={() => setEventoParaInfo(null)}
+                onEventosSugeridos={setEventosSugeridos}
               />
             )}
+            {activeTab === 'eventtest' && <EventTestPage user={currentUser} onEventoCreado={recargarEventos} />}
             {activeTab === 'profile' && <ProfilePage user={currentUser} onToggleRole={toggleRole} />}
           </div>
         </div>
@@ -245,6 +355,19 @@ export default function UniversityApp() {
           attendance={ATTENDANCE}
           events={eventosAPI.length > 0 ? eventosAPI : CAMPUS_EVENTS}
           onEventoCreado={recargarEventos}
+          navegarAlAsistente={navegarAlAsistente}
+          ventanaActiva={ventanaActiva}
+          setVentanaActiva={setVentanaActiva}
+          eventosSugeridos={eventosSugeridos}
+          verUbicacionEvento={verUbicacionEvento}
+          pedirInfoEvento={pedirInfoEvento}
+          eventoResaltadoMapa={eventoResaltadoMapa}
+          setEventoResaltadoMapa={setEventoResaltadoMapa}
+          eventoParaInfo={eventoParaInfo}
+          setEventoParaInfo={setEventoParaInfo}
+          setEventosSugeridos={setEventosSugeridos}
+          agregarEventoSugerido={agregarEventoSugerido}
+          agregarActividadSugerida={agregarActividadSugerida}
         />
         <div className="bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center relative z-10 safe-area-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:hidden">
           <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 ${activeTab === 'home' ? 'text-emerald-600' : 'text-slate-400'}`}>
