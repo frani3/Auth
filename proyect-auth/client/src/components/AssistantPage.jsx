@@ -1,12 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Sparkles, Loader2, Mic, Navigation, CheckCircle, Clock, Send } from 'lucide-react'
+import { Sparkles, Loader2, Mic, MicOff, Navigation, CheckCircle, Clock, Send } from 'lucide-react'
 import { callGeminiAPI } from '../api/gemini'
+import { useGeminiLive } from '../hooks/useGeminiLive'
 
 const AssistantPage = ({ user, onToggleRole, schedule = [] }) => {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef(null)
+
+  // Hook para audio en vivo con Gemini
+  const systemPrompt = `Eres un Asistente Logístico Universitario con voz. Tu foco es la EFICIENCIA y OPERACIÓN. 
+Rol del Usuario: ${user.role}. 
+Horario Usuario: ${JSON.stringify(schedule)}. 
+Responde siempre en español, de forma breve y clara. 
+Si el usuario pregunta qué hacer, sugiere actividades basadas en su horario y ventanas de tiempo libre.
+Si es docente y quiere crear eventos, ayúdalo a organizarlos.`
+
+  const handleVoiceResponse = (text) => {
+    if (text && text.trim()) {
+      setMessages((prev) => [...prev, { id: Date.now(), sender: 'bot', type: 'general', text }])
+    }
+  }
+
+  const { isRecording, isPlaying, error: voiceError, startRecording, stopRecording } = useGeminiLive(handleVoiceResponse, systemPrompt)
 
   useEffect(() => {
     const initialMsg = user.role === 'Docente'
@@ -135,18 +152,52 @@ const AssistantPage = ({ user, onToggleRole, schedule = [] }) => {
           )}
           <div ref={messagesEndRef} />
         </div>
+        
+        {/* Error de voz */}
+        {voiceError && (
+          <div className="px-4 py-2 bg-red-50 border-t border-red-200">
+            <p className="text-xs text-red-600">Error de voz: {voiceError}</p>
+          </div>
+        )}
+        
+        {/* Indicador de grabación */}
+        {isRecording && (
+          <div className="px-4 py-3 bg-blue-50 border-t border-blue-200 flex items-center justify-center gap-2">
+            <div className={`w-3 h-3 rounded-full ${isPlaying ? 'bg-emerald-500' : 'bg-red-500'} animate-pulse`}></div>
+            <p className="text-sm font-medium text-blue-700">
+              {isPlaying ? '🔊 Gemini está hablando...' : '🎤 Escuchando...'}
+            </p>
+          </div>
+        )}
+        
         <div className="p-4 bg-white border-t border-slate-200">
           <div className="flex gap-2 items-center bg-slate-100 px-4 py-3 rounded-xl border border-slate-200">
-            <Mic size={20} className="text-slate-400 hover:text-slate-600 cursor-pointer" />
+            {/* Botón de micrófono con audio en vivo */}
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`p-2 rounded-lg transition-all ${
+                isRecording 
+                  ? 'bg-red-500 text-white animate-pulse shadow-lg' 
+                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+              }`}
+              title={isRecording ? 'Detener grabación' : 'Hablar con el asistente'}
+            >
+              {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+            </button>
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-              placeholder={user.role === 'Docente' ? 'Ej: Crear ayudantía mañana a las 15...' : 'Ej: ¿Qué puedo hacer ahora?'}
+              placeholder={isRecording ? 'Habla con el asistente...' : (user.role === 'Docente' ? 'Ej: Crear ayudantía mañana a las 15...' : 'Ej: ¿Qué puedo hacer ahora?')}
               className="flex-1 bg-transparent outline-none text-sm text-slate-700 placeholder-slate-400"
+              disabled={isRecording}
             />
-            <button onClick={handleSend} className={`p-2 rounded-lg text-white transition-all ${input.trim() ? 'bg-emerald-500 shadow-lg' : 'bg-slate-300'}`}>
+            <button 
+              onClick={handleSend} 
+              disabled={isRecording}
+              className={`p-2 rounded-lg text-white transition-all ${input.trim() && !isRecording ? 'bg-emerald-500 shadow-lg' : 'bg-slate-300'}`}
+            >
               <Send size={16} />
             </button>
           </div>

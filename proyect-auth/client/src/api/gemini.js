@@ -1,4 +1,4 @@
-const apiKey = ''
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ''
 const MODEL_NAME = 'gemini-2.5-flash-preview-09-2025'
 
 export const callGeminiAPI = async (prompt, systemInstruction = '') => {
