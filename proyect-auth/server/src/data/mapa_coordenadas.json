@@ -1,0 +1,212 @@
+{
+  "metadata": {
+    "description": "Mapa de coordenadas del Campus San Joaquín de la Pontificia Universidad Católica de Chile, con detalle de salas interiores.",
+    "sistema_coordenadas": {
+      "origen": "Esquina inferior izquierda (0,0)",
+      "eje_x": "Horizontal, hacia la derecha (0 a 100)",
+      "eje_y": "Vertical, hacia arriba (0 a 100)",
+      "escala": "Coordenadas normalizadas en una cuadrícula de 100x100 para representar posiciones relativas."
+    }
+  },
+  "elementos": {
+    "caminos_principales": [
+      {
+        "nombre": "Avenida Vicuña Mackenna",
+        "tipo": "calle_perimetral",
+        "descripcion": "Límite oeste del campus.",
+        "coordenadas_aproximadas": {
+          "inicio": { "x": 5, "y": 0 },
+          "fin": { "x": 12, "y": 100 }
+        }
+      },
+      {
+        "nombre": "Avenida Marathon",
+        "tipo": "calle_perimetral",
+        "descripcion": "Límite este del campus.",
+        "coordenadas_aproximadas": {
+          "inicio": { "x": 92, "y": 0 },
+          "fin": { "x": 96, "y": 100 }
+        }
+      },
+      {
+        "nombre": "Avenida Monseñor Carlos Casanueva",
+        "tipo": "calle_perimetral",
+        "descripcion": "Límite norte del campus.",
+        "coordenadas_aproximadas": {
+          "inicio": { "x": 12, "y": 96 },
+          "fin": { "x": 85, "y": 92 }
+        }
+      },
+      {
+        "nombre": "Paseo Central del Campus",
+        "tipo": "camino_interno",
+        "descripcion": "Eje peatonal principal que recorre el campus de norte a sur.",
+        "coordenadas_aproximadas": {
+          "inicio": { "x": 50, "y": 20 },
+          "fin": { "x": 50, "y": 80 }
+        }
+      }
+    ],
+    "edificios_y_complejos": [
+      {
+        "nombre": "Centro Médico UC San Joaquín",
+        "id": "cm_uc",
+        "tipo": "complejo_edificios",
+        "punto_central": { "x": 25, "y": 75 },
+        "salas": [
+          {
+            "nombre": "Recepción",
+            "id": "cm_recep",
+            "piso": 1,
+            "coordenadas": { "x": 25.0, "y": 74.5 }
+          },
+          {
+            "nombre": "Consulta General 1",
+            "id": "cm_con_01",
+            "piso": 2,
+            "coordenadas": { "x": 24.5, "y": 75.5 }
+          },
+          {
+            "nombre": "Laboratorio de Muestras",
+            "id": "cm_lab_01",
+            "piso": 1,
+            "coordenadas": { "x": 25.5, "y": 75.5 }
+          }
+        ]
+      },
+      {
+        "nombre": "Preuniversitario UC",
+        "id": "preu_uc",
+        "tipo": "edificio",
+        "punto_central": { "x": 55, "y": 70 },
+        "salas": [
+          {
+            "nombre": "Sala P-101",
+            "id": "preu_101",
+            "piso": 1,
+            "coordenadas": { "x": 54.5, "y": 69.5 }
+          },
+          {
+            "nombre": "Sala P-102",
+            "id": "preu_102",
+            "piso": 1,
+            "coordenadas": { "x": 55.5, "y": 69.5 }
+          },
+          {
+            "nombre": "Oficina de Admisión",
+            "id": "preu_adm",
+            "piso": 1,
+            "coordenadas": { "x": 55.0, "y": 70.5 }
+          }
+        ]
+      },
+      {
+        "nombre": "Complejo de Edificios Suroeste",
+        "id": "comp_sur",
+        "tipo": "complejo_edificios",
+        "descripcion": "Grupo de edificios en la zona inferior izquierda.",
+        "punto_central": { "x": 25, "y": 25 },
+        "salas": [
+          {
+            "nombre": "Laboratorio de Computación A",
+            "id": "sur_lab_a",
+            "piso": 1,
+            "coordenadas": { "x": 24.0, "y": 24.0 }
+          },
+          {
+            "nombre": "Sala de Estudio Silencioso",
+            "id": "sur_estudio",
+            "piso": 2,
+            "coordenadas": { "x": 26.0, "y": 25.0 }
+          },
+          {
+            "nombre": "Auditorio Sur",
+            "id": "sur_aud",
+            "piso": 1,
+            "coordenadas": { "x": 25.0, "y": 26.0 }
+          }
+        ]
+      },
+      {
+        "nombre": "Edificios Centrales",
+        "id": "edi_cen",
+        "tipo": "complejo_edificios",
+        "descripcion": "Agrupación de edificios en el corazón del campus.",
+        "punto_central": { "x": 50, "y": 50 },
+        "salas": [
+          {
+            "nombre": "Aula Magna",
+            "id": "cen_am",
+            "capacidad": 300,
+            "coordenadas": { "x": 50.0, "y": 50.0 }
+          },
+          {
+            "nombre": "Cafetería Principal",
+            "id": "cen_cafe",
+            "tipo": "servicio",
+            "coordenadas": { "x": 49.0, "y": 49.0 }
+          },
+          {
+            "nombre": "Librería UC",
+            "id": "cen_lib",
+            "tipo": "servicio",
+            "coordenadas": { "x": 51.0, "y": 51.0 }
+          }
+        ]
+      },
+      {
+        "nombre": "Sector Nororiente (Facultades)",
+        "id": "sec_nor",
+        "tipo": "complejo_edificios",
+        "descripcion": "Área con múltiples edificios académicos al noreste del centro.",
+        "punto_central": { "x": 65, "y": 60 },
+        "salas": [
+          {
+            "nombre": "Decanato de Ingeniería",
+            "id": "nor_dec_ing",
+            "piso": 2,
+            "coordenadas": { "x": 65.0, "y": 61.0 }
+          },
+          {
+            "nombre": "Sala de Grados",
+            "id": "nor_grados",
+            "piso": 3,
+            "coordenadas": { "x": 66.0, "y": 59.5 }
+          },
+          {
+            "nombre": "Laboratorio de Redes",
+            "id": "nor_lab_red",
+            "piso": 1,
+            "coordenadas": { "x": 64.0, "y": 59.5 }
+          }
+        ]
+      }
+    ],
+    "puntos_de_interes_y_areas": [
+      {
+        "nombre": "Etiqueta Principal del Campus",
+        "tipo": "referencia_texto",
+        "descripcion": "Ubicación del texto 'Pontificia Universidad Católica de Chile (Campus San Joaquín)'.",
+        "punto_central": { "x": 62, "y": 52 }
+      },
+      {
+        "nombre": "Laguna",
+        "tipo": "cuerpo_de_agua",
+        "descripcion": "Cuerpo de agua distintivo en el lado este del campus.",
+        "punto_central": { "x": 78, "y": 48 }
+      },
+      {
+        "nombre": "Campos Deportivos",
+        "tipo": "area_recreativa",
+        "descripcion": "Zona de canchas y espacios deportivos al este.",
+        "punto_central": { "x": 85, "y": 30 }
+      },
+      {
+        "nombre": "Área Verde Central",
+        "tipo": "parque",
+        "descripcion": "Espacio abierto y verde cerca del centro del campus.",
+        "punto_central": { "x": 40, "y": 55 }
+      }
+    ]
+  }
+}
