@@ -1,4 +1,4 @@
-# 🎓 Hackscate - Asistente Universitario
+# 🎓 Hackscate - INTEGRATE + Asistente Universitario 
 
 Plataforma web universitaria con asistente de voz potenciado por **Gemini AI** que ayuda a estudiantes a gestionar su horario, eventos del campus y encontrar ubicaciones.
 
