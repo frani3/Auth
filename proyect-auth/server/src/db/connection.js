@@ -2,6 +2,11 @@
 import mongoose from "mongoose";
 
 export const connectDB = async () => {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("MongoDB conectado");
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("MongoDB conectado");
+    } catch (error) {
+        console.error("Error conectando a MongoDB:", error.message);
+        console.log("El servidor continuará sin base de datos...");
+    }
 };

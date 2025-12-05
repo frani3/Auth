@@ -1,15 +1,26 @@
-import Evento from "../models/Evento.js";
-
-export const crearEvento = async (req, res) => {
-    try {
-        const nuevoEvento = await Evento.create(req.body);
-        res.status(201).json(nuevoEvento);
-    } catch (error) {
-        res.status(500).json({ error: "No se pudo crear el evento" });
+// Mock de eventos en memoria
+let eventos = [
+    {
+        id: 1,
+        titulo: "Hackathon 2025",
+        descripcion: "Evento de programación",
+        latitud: -33.45,
+        longitud: -70.66,
+        fecha: "2025-12-10",
+        hora: "10:00",
+        creador: "admin@mail.com"
     }
+];
+
+export const crearEvento = (req, res) => {
+    const nuevoEvento = {
+        id: eventos.length + 1,
+        ...req.body
+    };
+    eventos.push(nuevoEvento);
+    res.status(201).json(nuevoEvento);
 };
 
-export const obtenerEventos = async (req, res) => {
-    const eventos = await Evento.find();
+export const obtenerEventos = (req, res) => {
     res.json(eventos);
 };

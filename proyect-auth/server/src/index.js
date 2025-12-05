@@ -1,14 +1,9 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-import { connectDB } from "./db/connection.js";
 
 import horarioRoutes from "./routes/horario.js";
 import notasRoutes from "./routes/notas.js";
 import eventosRoutes from "./routes/eventos.js";
-
-dotenv.config();
-connectDB();
 
 const app = express();
 app.use(cors());
