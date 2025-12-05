@@ -164,4 +164,4 @@ Desarrollado para Hackathon 2025
 
 ## 📄 Licencia
 
-ISC
+Este proyecto está bajo la licencia MIT - ver el archivo [LICENSE](./LICENSE) para más detalles.
