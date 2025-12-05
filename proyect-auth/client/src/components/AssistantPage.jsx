@@ -2,20 +2,40 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Sparkles, Loader2, Mic, MicOff, Navigation, CheckCircle, Clock, Send } from 'lucide-react'
 import { callGeminiAPI } from '../api/gemini'
 import { useGeminiLive } from '../hooks/useGeminiLive'
+import { crearEvento, formatHorarioForAssistant, formatEventosForAssistant, detectarVentanas } from '../services/backendApi'
 
-const AssistantPage = ({ user, onToggleRole, schedule = [] }) => {
+const AssistantPage = ({ user, onToggleRole, schedule = [], eventos = [], onEventoCreado }) => {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [pendingEvent, setPendingEvent] = useState(null)
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false)
   const messagesEndRef = useRef(null)
+
+  // Formatear datos para el contexto del asistente
+  const horarioTexto = formatHorarioForAssistant(schedule)
+  const eventosTexto = formatEventosForAssistant(eventos)
+  const ventanas = detectarVentanas(schedule)
 
   // Hook para audio en vivo con Gemini
   const systemPrompt = `Eres un Asistente Logístico Universitario con voz. Tu foco es la EFICIENCIA y OPERACIÓN. 
 Rol del Usuario: ${user.role}. 
-Horario Usuario: ${JSON.stringify(schedule)}. 
-Responde siempre en español, de forma breve y clara. 
-Si el usuario pregunta qué hacer, sugiere actividades basadas en su horario y ventanas de tiempo libre.
-Si es docente y quiere crear eventos, ayúdalo a organizarlos.`
+Nombre del Usuario: ${user.name}.
+
+HORARIO ACTUAL DEL USUARIO:
+${horarioTexto}
+
+EVENTOS PRÓXIMOS EN EL CAMPUS:
+${eventosTexto}
+
+VENTANAS DE TIEMPO LIBRE DETECTADAS:
+${ventanas.length > 0 ? ventanas.map(v => `- ${v.dia}: ${v.inicio} a ${v.fin} (${v.duracion} minutos)`).join('\n') : 'No hay ventanas detectadas'}
+
+INSTRUCCIONES:
+- Responde siempre en español, de forma breve y clara.
+- Si el usuario pregunta qué hacer, sugiere actividades basadas en su horario y ventanas de tiempo libre.
+- Si es docente y quiere crear eventos, ayúdalo a organizarlos indicando título, hora y sala.
+- Usa la información real del horario y eventos para dar respuestas precisas.`
 
   const handleVoiceResponse = (text) => {
     if (text && text.trim()) {
@@ -26,11 +46,20 @@ Si es docente y quiere crear eventos, ayúdalo a organizarlos.`
   const { isRecording, isPlaying, error: voiceError, startRecording, stopRecording } = useGeminiLive(handleVoiceResponse, systemPrompt)
 
   useEffect(() => {
-    const initialMsg = user.role === 'Docente'
-      ? 'Hola Profesor. Puedo ayudarle a agendar ayudantías o reservar salas automáticamente.'
-      : 'Hola Sofía. Detecto una ventana de 90 min. ¿Quieres que te sugiera dónde estudiar?'
+    let initialMsg
+    if (user.role === 'Docente') {
+      initialMsg = 'Hola Profesor. Puedo ayudarle a agendar ayudantías o reservar salas automáticamente.'
+    } else {
+      // Personalizar mensaje según ventanas detectadas
+      if (ventanas.length > 0) {
+        const primeraVentana = ventanas[0]
+        initialMsg = `Hola ${user.name}. Detecto una ventana de ${primeraVentana.duracion} minutos ${primeraVentana.dia}. ¿Quieres que te sugiera dónde estudiar?`
+      } else {
+        initialMsg = `Hola ${user.name}. ¿En qué puedo ayudarte hoy?`
+      }
+    }
     setMessages([{ id: 1, sender: 'bot', type: 'general', text: initialMsg }])
-  }, [user])
+  }, [user, ventanas.length])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -42,19 +71,96 @@ Si es docente y quiere crear eventos, ayúdalo a organizarlos.`
     setMessages((prev) => [...prev, userMsg])
     setInput('')
     setIsTyping(true)
-    const systemPrompt = `Eres un Asistente Logístico Universitario. Tu foco es la EFICIENCIA y OPERACIÓN. Rol del Usuario: ${user.role}. Horario Usuario: ${JSON.stringify(schedule)}. INSTRUCCIONES: 1. Si el usuario es DOCENTE y quiere crear un evento (ej: "ayudantía mañana"): - Extrae: Título, Hora, Día. - Sugiere una sala (A-101, B-202). - Responde con un JSON type="event_creation". 2. Si el usuario es ALUMNO y tiene tiempo libre o pregunta qué hacer: - Analiza ventanas en el horario. - Sugiere actividad productiva (Biblioteca, Zona Estudio). - Responde con un JSON type="recommendation". 3. Para todo lo demás, responde breve y formal JSON type="general".`
+    
+    const chatSystemPrompt = `Eres un Asistente Logístico Universitario. Tu foco es la EFICIENCIA y OPERACIÓN. 
+Rol del Usuario: ${user.role}. 
+Nombre: ${user.name}.
+
+HORARIO ACTUAL:
+${horarioTexto}
+
+EVENTOS DEL CAMPUS:
+${eventosTexto}
+
+VENTANAS DE TIEMPO LIBRE:
+${ventanas.length > 0 ? ventanas.map(v => `- ${v.dia}: ${v.inicio} a ${v.fin} (${v.duracion} min)`).join('\n') : 'Sin ventanas detectadas'}
+
+INSTRUCCIONES: 
+1. Si el usuario es DOCENTE y quiere crear un evento (ej: "ayudantía mañana"): 
+   - Extrae: Título, Hora, Día. 
+   - Sugiere una sala (A-101, B-202). 
+   - Responde con un JSON type="event_creation". 
+2. Si el usuario es ALUMNO y tiene tiempo libre o pregunta qué hacer: 
+   - Analiza las ventanas detectadas en el horario. 
+   - Sugiere actividad productiva (Biblioteca, Zona Estudio, algún evento cercano). 
+   - Responde con un JSON type="recommendation". 
+3. Para todo lo demás, responde breve y formal JSON type="general".`
+
     try {
-      const geminiResponse = await callGeminiAPI(input, systemPrompt)
+      const geminiResponse = await callGeminiAPI(input, chatSystemPrompt)
       setTimeout(() => {
         let botMsg = { id: Date.now() + 1, sender: 'bot', ...geminiResponse }
-        if (!botMsg.message && !botMsg.event_details) {
+        if (!botMsg.message && !botMsg.event_details && !botMsg.text) {
           botMsg = { id: Date.now() + 1, sender: 'bot', type: 'general', message: 'Entendido. Procesando tu solicitud en el sistema.' }
         }
+        
+        // Si es evento, guardar como pendiente para confirmar
+        if (botMsg.type === 'event_creation' && botMsg.event_details) {
+          setPendingEvent(botMsg.event_details)
+        }
+        
         setMessages((prev) => [...prev, botMsg])
         setIsTyping(false)
       }, 1000)
     } catch (e) {
+      setMessages((prev) => [...prev, { 
+        id: Date.now() + 1, 
+        sender: 'bot', 
+        type: 'general', 
+        message: 'Lo siento, hubo un error al procesar tu mensaje.' 
+      }])
       setIsTyping(false)
+    }
+  }
+
+  // Función para confirmar y crear evento en el backend
+  const handleConfirmEvent = async (eventDetails) => {
+    setIsCreatingEvent(true)
+    try {
+      const nuevoEvento = {
+        titulo: eventDetails.title,
+        descripcion: eventDetails.description || `Evento creado por ${user.name}`,
+        fecha: eventDetails.date || new Date().toISOString().split('T')[0],
+        hora: eventDetails.time,
+        ubicacion: eventDetails.room,
+        tipo: user.role === 'Docente' ? 'academico' : 'personal'
+      }
+      
+      await crearEvento(nuevoEvento)
+      
+      // Notificar al usuario
+      setMessages((prev) => [...prev, {
+        id: Date.now(),
+        sender: 'bot',
+        type: 'general',
+        text: `✅ ¡Evento "${eventDetails.title}" creado exitosamente! Se ha agregado al calendario del campus.`
+      }])
+      
+      // Recargar eventos
+      if (onEventoCreado) {
+        await onEventoCreado()
+      }
+      
+      setPendingEvent(null)
+    } catch (error) {
+      setMessages((prev) => [...prev, {
+        id: Date.now(),
+        sender: 'bot',
+        type: 'general',
+        text: `❌ Error al crear el evento: ${error.message}`
+      }])
+    } finally {
+      setIsCreatingEvent(false)
     }
   }
 
@@ -132,8 +238,19 @@ Si es docente y quiere crear eventos, ayúdalo a organizarlos.`
                           </div>
                         </div>
                         <div className="pt-2 border-t border-slate-100">
-                          <button className="w-full bg-slate-900 text-white text-xs font-bold py-2 rounded-lg shadow-lg hover:bg-slate-700">
-                            Confirmar y Notificar
+                          <button 
+                            onClick={() => handleConfirmEvent(msg.event_details)}
+                            disabled={isCreatingEvent}
+                            className="w-full bg-slate-900 text-white text-xs font-bold py-2 rounded-lg shadow-lg hover:bg-slate-700 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          >
+                            {isCreatingEvent ? (
+                              <>
+                                <Loader2 size={14} className="animate-spin" />
+                                Creando...
+                              </>
+                            ) : (
+                              'Confirmar y Notificar'
+                            )}
                           </button>
                         </div>
                       </div>

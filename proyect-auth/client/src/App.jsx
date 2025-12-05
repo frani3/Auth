@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Home, Book, Map as MapIcon, User, Bell, Calendar, Sparkles } from 'lucide-react'
 import HomePage from './pages/Home'
 import AcademicPage from './pages/Academic'
@@ -6,6 +6,7 @@ import MapPage from './pages/Map'
 import ChatPage from './pages/Chat'
 import ProfilePage from './pages/Profile'
 import { SCHEDULE_TODAY, GRADES, ATTENDANCE, CAMPUS_EVENTS } from './data/mockData'
+import { getHorario, getNotas, getEventos } from './services/backendApi'
 
 const ROLES = {
   STUDENT: { name: 'Sofía', role: 'Estudiante', id: 'u2023001' },
@@ -60,7 +61,7 @@ const Header = ({ title, userRole, onSwitch }) => (
   </div>
 )
 
-const DesktopView = ({ activeTab, setActiveTab, user, onToggleRole, schedule, grades, attendance, events }) => (
+const DesktopView = ({ activeTab, setActiveTab, user, onToggleRole, schedule, grades, attendance, events, onEventoCreado }) => (
   <div className="hidden md:grid md:grid-cols-[220px_1fr_300px] md:gap-6 md:w-full md:mt-6">
     <div className="bg-white shadow-2xl rounded-3xl p-5 flex flex-col gap-6 sticky top-6 h-[calc(100vh-48px)]">
       <div>
@@ -110,7 +111,7 @@ const DesktopView = ({ activeTab, setActiveTab, user, onToggleRole, schedule, gr
         )}
         {activeTab === 'map' && <MapPage userRole={user.role} events={events} />}
         {activeTab === 'assistant' && (
-          <ChatPage user={user} onToggleRole={onToggleRole} schedule={schedule} />
+          <ChatPage user={user} onToggleRole={onToggleRole} schedule={schedule} eventos={events} onEventoCreado={onEventoCreado} />
         )}
         {activeTab === 'profile' && <ProfilePage user={user} onToggleRole={onToggleRole} />}
       </div>
@@ -165,9 +166,48 @@ const DesktopView = ({ activeTab, setActiveTab, user, onToggleRole, schedule, gr
 export default function UniversityApp() {
   const [activeTab, setActiveTab] = useState('home')
   const [currentUser, setCurrentUser] = useState(ROLES.STUDENT)
+  
+  // Estados para datos de la API
+  const [horarioAPI, setHorarioAPI] = useState([])
+  const [notasAPI, setNotasAPI] = useState([])
+  const [eventosAPI, setEventosAPI] = useState([])
+  const [loadingData, setLoadingData] = useState(true)
+
+  // Cargar datos del backend al montar
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        setLoadingData(true)
+        const [horario, notas, eventos] = await Promise.all([
+          getHorario(),
+          getNotas(),
+          getEventos()
+        ])
+        setHorarioAPI(horario)
+        setNotasAPI(notas)
+        setEventosAPI(eventos)
+      } catch (error) {
+        console.error('Error cargando datos del backend:', error)
+        // Usar datos mock como fallback
+      } finally {
+        setLoadingData(false)
+      }
+    }
+    cargarDatos()
+  }, [])
 
   const toggleRole = () => {
     setCurrentUser((prev) => (prev.role === 'Estudiante' ? ROLES.PROFESSOR : ROLES.STUDENT))
+  }
+
+  // Función para recargar eventos (útil después de crear uno nuevo)
+  const recargarEventos = async () => {
+    try {
+      const eventos = await getEventos()
+      setEventosAPI(eventos)
+    } catch (error) {
+      console.error('Error recargando eventos:', error)
+    }
   }
 
   return (
@@ -177,14 +217,20 @@ export default function UniversityApp() {
           <Header title={getTabTitle(activeTab)} userRole={currentUser} onSwitch={toggleRole} />
           <div className="flex-1 overflow-y-auto bg-slate-50 scroll-smooth">
             {activeTab === 'home' && (
-              <HomePage schedule={SCHEDULE_TODAY} user={currentUser} onNavigate={setActiveTab} />
+              <HomePage schedule={horarioAPI.length > 0 ? horarioAPI : SCHEDULE_TODAY} user={currentUser} onNavigate={setActiveTab} />
             )}
             {activeTab === 'academic' && (
-              <AcademicPage grades={GRADES} attendance={ATTENDANCE} schedule={SCHEDULE_TODAY} />
+              <AcademicPage grades={notasAPI.length > 0 ? notasAPI : GRADES} attendance={ATTENDANCE} schedule={horarioAPI.length > 0 ? horarioAPI : SCHEDULE_TODAY} />
             )}
-            {activeTab === 'map' && <MapPage userRole={currentUser.role} events={CAMPUS_EVENTS} />}
+            {activeTab === 'map' && <MapPage userRole={currentUser.role} events={eventosAPI.length > 0 ? eventosAPI : CAMPUS_EVENTS} />}
             {activeTab === 'assistant' && (
-              <ChatPage user={currentUser} onToggleRole={toggleRole} schedule={SCHEDULE_TODAY} />
+              <ChatPage 
+                user={currentUser} 
+                onToggleRole={toggleRole} 
+                schedule={horarioAPI.length > 0 ? horarioAPI : SCHEDULE_TODAY}
+                eventos={eventosAPI.length > 0 ? eventosAPI : CAMPUS_EVENTS}
+                onEventoCreado={recargarEventos}
+              />
             )}
             {activeTab === 'profile' && <ProfilePage user={currentUser} onToggleRole={toggleRole} />}
           </div>
@@ -194,10 +240,11 @@ export default function UniversityApp() {
           setActiveTab={setActiveTab}
           user={currentUser}
           onToggleRole={toggleRole}
-          schedule={SCHEDULE_TODAY}
-          grades={GRADES}
+          schedule={horarioAPI.length > 0 ? horarioAPI : SCHEDULE_TODAY}
+          grades={notasAPI.length > 0 ? notasAPI : GRADES}
           attendance={ATTENDANCE}
-          events={CAMPUS_EVENTS}
+          events={eventosAPI.length > 0 ? eventosAPI : CAMPUS_EVENTS}
+          onEventoCreado={recargarEventos}
         />
         <div className="bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center relative z-10 safe-area-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:hidden">
           <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 ${activeTab === 'home' ? 'text-emerald-600' : 'text-slate-400'}`}>
