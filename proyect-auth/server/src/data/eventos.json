@@ -1,12 +1,110 @@
 [
   {
     "id": 1,
-    "titulo": "Hackathon 2025",
-    "descripcion": "Evento de programación",
-    "latitud": -33.45,
-    "longitud": -70.66,
+    "titulo": "Hackathon UC 2025",
+    "descripcion": "48 horas de programación intensiva. Equipos de 3-5 personas. Premios para los mejores proyectos de innovación tecnológica.",
     "fecha": "2025-12-10",
+    "hora": "09:00",
+    "creador": "ingenieria@uc.cl",
+    "ubicacion_id": "cen_am"
+  },
+  {
+    "id": 2,
+    "titulo": "Feria de Empleabilidad",
+    "descripcion": "Conecta con las mejores empresas del país. Trae tu CV y prepárate para entrevistas en el momento.",
+    "fecha": "2025-12-12",
     "hora": "10:00",
-    "creador": "admin@mail.com"
+    "creador": "empleabilidad@uc.cl",
+    "ubicacion_id": "sur_aud"
+  },
+  {
+    "id": 3,
+    "titulo": "Workshop: Introducción a Machine Learning",
+    "descripcion": "Aprende los fundamentos de ML con Python. Trae tu laptop con Python instalado.",
+    "fecha": "2025-12-13",
+    "hora": "15:00",
+    "creador": "ia.club@uc.cl",
+    "ubicacion_id": "nor_lab_red"
+  },
+  {
+    "id": 4,
+    "titulo": "Charla: Emprendimiento en Chile",
+    "descripcion": "Experiencias de fundadores de startups chilenas. Q&A al final de la sesión.",
+    "fecha": "2025-12-14",
+    "hora": "11:00",
+    "creador": "emprendimiento@uc.cl",
+    "ubicacion_id": "nor_dec_ing"
+  },
+  {
+    "id": 5,
+    "titulo": "Torneo de Fútbol Interfacultades",
+    "descripcion": "Inscribe a tu equipo antes del 10 de diciembre. Categorías masculina y femenina.",
+    "fecha": "2025-12-15",
+    "hora": "14:00",
+    "creador": "deportes@uc.cl",
+    "ubicacion_id": "Campos Deportivos"
+  },
+  {
+    "id": 6,
+    "titulo": "Concierto de Navidad",
+    "descripcion": "Presentación del coro y orquesta UC. Entrada liberada para la comunidad universitaria.",
+    "fecha": "2025-12-18",
+    "hora": "19:00",
+    "creador": "cultura@uc.cl",
+    "ubicacion_id": "cen_am"
+  },
+  {
+    "id": 7,
+    "titulo": "Taller de Primeros Auxilios",
+    "descripcion": "Aprende técnicas básicas de primeros auxilios y RCP. Cupos limitados.",
+    "fecha": "2025-12-11",
+    "hora": "10:00",
+    "creador": "salud@uc.cl",
+    "ubicacion_id": "cm_recep"
+  },
+  {
+    "id": 8,
+    "titulo": "Cine al Aire Libre: Película Sorpresa",
+    "descripcion": "Trae tu manta y snacks. La película se revelará el mismo día.",
+    "fecha": "2025-12-16",
+    "hora": "20:00",
+    "creador": "feduc@uc.cl",
+    "ubicacion_id": "Área Verde Central"
+  },
+  {
+    "id": 9,
+    "titulo": "Seminario: Inteligencia Artificial en la Medicina",
+    "descripcion": "Expositores internacionales presentan avances en diagnóstico asistido por IA.",
+    "fecha": "2025-12-17",
+    "hora": "09:30",
+    "creador": "medicina@uc.cl",
+    "ubicacion_id": "cm_con_01"
+  },
+  {
+    "id": 10,
+    "titulo": "Workshop de Fotografía",
+    "descripcion": "Aprende composición y edición básica. Trae tu cámara o celular.",
+    "fecha": "2025-12-19",
+    "hora": "16:00",
+    "creador": "arte@uc.cl",
+    "ubicacion_id": "Laguna"
+  },
+  {
+    "id": 11,
+    "titulo": "Debate: Ética en la Tecnología",
+    "descripcion": "Mesa redonda sobre privacidad, IA y responsabilidad digital.",
+    "fecha": "2025-12-20",
+    "hora": "11:00",
+    "creador": "filosofia@uc.cl",
+    "ubicacion_id": "nor_grados"
+  },
+  {
+    "id": 12,
+    "titulo": "Feria Gastronómica",
+    "descripcion": "Prueba comidas de diferentes países preparadas por estudiantes internacionales.",
+    "fecha": "2025-12-21",
+    "hora": "12:00",
+    "creador": "internacional@uc.cl",
+    "ubicacion_id": "cen_cafe"
   }
 ]
